@@ -1,17 +1,17 @@
-SRC_NAME=mbedtls-2.28.1
-SRC_URL=https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-2.28.1.tar.gz
+SRC_NAME=mbedtls-2.28.7
+SRC_URL=https://github.com/Mbed-TLS/mbedtls/archive/v2.28.7.tar.gz
 
 all: download_test extract_test config_test
 	$(MAKE) -j$(HOST_NCPU) -C $(SRC_NAME)/build
 
 download_test:
 	( if [ ! -f $(SRC_NAME).tar.gz ]; then \
-		wget -t5 --timeout=20 --no-check-certificate -O $(SRC_NAME).tar.gz $(SRC_URL); \
+		wget -t5 --timeout=20 --no-check-certificate -O $(SRC_NAME).tgz $(SRC_URL); \
 	fi )
 
 extract_test:
 	( if [ ! -d $(SRC_NAME) ]; then \
-		tar -xf $(SRC_NAME).tar.gz; \
+		tar zxf $(SRC_NAME).tar.gz; \
 	fi )
 
 config_test:
@@ -23,9 +23,9 @@ config_test:
 
 configure:
 	( mkdir -p $(SRC_NAME)/build && cd $(SRC_NAME)/build ; \
-	cmake \
+	cmake -DCMAKE_BUILD_TYPE=Release \
 	-DCMAKE_INSTALL_PREFIX=$(STAGEDIR) \
-	-DCMAKE_TOOLCHAIN_FILE=../../cross-mipsel-linux.cmake \
+	-DCMAKE_TOOLCHAIN_FILE=$(CONFIG_CMAKE_TOOLCHAIN_FILE) \
 	-DUSE_SHARED_MBEDTLS_LIBRARY=ON \
 	-DUSE_STATIC_MBEDTLS_LIBRARY=OFF \
 	-DENABLE_TESTING=OFF \
