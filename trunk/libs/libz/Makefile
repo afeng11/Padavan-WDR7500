@@ -1,8 +1,8 @@
-SRC_NAME=zlib-1.2.11
-SRC_URL=http://www.zlib.net/$(SRC_NAME).tar.gz
+SRC_NAME=zlib-1.3.1
+SRC_URL=https://www.zlib.net/$(SRC_NAME).tar.gz
 
 all: download_test extract_test config_test
-	$(MAKE) -j$(HOST_NCPU) -C $(SRC_NAME)
+	$(MAKE) -j$(HOST_NCPU) -C $(SRC_NAME)/build
 
 download_test:
 	( if [ ! -f $(SRC_NAME).tar.gz ]; then \
@@ -12,6 +12,7 @@ download_test:
 extract_test:
 	( if [ ! -d $(SRC_NAME) ]; then \
 		tar zxf $(SRC_NAME).tar.gz; \
+		patch -d $(SRC_NAME) -p1 -i ../101-pass-ldflags-to-link-tests.patch; \
 	fi )
 
 config_test:
@@ -22,20 +23,19 @@ config_test:
 	fi )
 
 configure:
-	( cd $(SRC_NAME) ; \
-	./configure \
-		--prefix=$(STAGEDIR) \
-		--shared ; \
+	( mkdir -p $(SRC_NAME)/build && cd $(SRC_NAME)/build ; \
+	cmake -DCMAKE_BUILD_TYPE=Release \
+	-DCMAKE_INSTALL_PREFIX=$(STAGEDIR) \
+	-DCMAKE_TOOLCHAIN_FILE=$(CONFIG_CMAKE_TOOLCHAIN_FILE) \
+	.. \
 	)
 
 clean:
-	if [ -f $(SRC_NAME)/Makefile ] ; then \
-		$(MAKE) -C $(SRC_NAME) distclean ; \
-	fi ; \
+	rm -rf $(SRC_NAME)/build
 	rm -f config_done
 
 install:
-	$(MAKE) -C $(SRC_NAME) install DESTDIR=""
+	$(MAKE) -C $(SRC_NAME)/build install DESTDIR=""
 
 romfs:
 	cp -fP $(DESTDIR)/lib/libz.so* $(ROMFSDIR)/lib
